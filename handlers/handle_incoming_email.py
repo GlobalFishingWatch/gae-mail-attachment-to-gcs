@@ -3,6 +3,7 @@ import logging
 from google.appengine.api.mail import Attachment
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 import webapp2
+import hashlib
 
 class VmsGCSUploaderHandler(InboundMailHandler):
     def receive(self, mail_message):
@@ -24,8 +25,10 @@ class VmsGCSUploaderHandler(InboundMailHandler):
         for attachment in attachments:
             logging.info("Attachment filename %s.", attachment.filename)
             logging.info("Attachment payload %s.", attachment.payload)
+            hash_object = hashlib.md5(bytearray(attachment.content))
+            attHash = hash_object.hexdigest()
             #Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
-            att_nam = msg_date + "-" + attachment + ".data"
+            att_nam = msg_date + "-" + attHash + ".data"
             logging.info("Attachment name %s.", att_name)
             #Upload attachment to GCS
             # GCSTransfer()
