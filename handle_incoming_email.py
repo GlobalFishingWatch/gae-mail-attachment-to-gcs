@@ -31,9 +31,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
         for body in html_bodies:
             logging.info("Html body %s.", body)
             num, decoded_html = body
-            logging.info("Html body of length %d.", len(decoded_html))
             logging.info("Html body %s.", decoded_html)
-            logging.info("Html body tupple %d.", body.decode())
 
 
         attachments = main_message.attachments
@@ -51,12 +49,6 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             logging.info("Attachment name %s.", att_name)
             #Upload attachment to GCS
             # GCSTransfer()
-
-        #TODO remove, just for debugging
-        for content_type, body in plaintext_bodies:
-            plaintext = body.decode()
-            logging.info("Plain text body of length %d.", len(plaintext))
-            logging.info("Plain text body %s.", plaintext)
 
 
 app = webapp2.WSGIApplication([VmsGCSUploaderHandler.mapping()], debug=True)
