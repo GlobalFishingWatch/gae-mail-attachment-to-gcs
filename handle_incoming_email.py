@@ -34,7 +34,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             logging.info("Html body %s.", decoded_html)
 
 
-        attachments = main_message.attachments
+        attachments = mail_message.attachments
         logging.info("Html attachments of length %d.", len(attachments))
         for attachment in attachments:
             logging.info("Attachment filename %s.", attachment.filename)
