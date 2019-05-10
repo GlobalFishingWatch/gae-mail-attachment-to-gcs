@@ -40,7 +40,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             logging.info("Attachment filename %s.", attachment.filename)
             logging.info("Attachment payload %s.", attachment.payload)
 
-            hash_object = hashlib.md5(bytearray(attachment.content))
+            hash_object = hashlib.md5(bytearray(attachment.payload))
             attHash = hash_object.hexdigest()
             msg_date_str = msg_date.strftime("%Y%m%d-%H%M")
 
