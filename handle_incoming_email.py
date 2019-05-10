@@ -13,9 +13,10 @@ class VmsGCSUploaderHandler(InboundMailHandler):
         html_bodies = mail_message.bodies('text/html')
 
         for body in html_bodies:
-            decoded_html = body.decode()
+            decoded_html, = body.decode()
             logging.info("Html body of length %d.", len(decoded_html))
             logging.info("Html body %s.", decoded_html)
+            logging.info("Html body tupple %d.", body.decode())
 
         msg_date = mail_message.date
         msg_date = msg_date.strftime("%Y%m%d-%H%M")
