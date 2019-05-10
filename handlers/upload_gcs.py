@@ -1,5 +1,6 @@
-import os
 import ConfigParser
+
+from google.cloud import storage
 
 class GCSTransfer:
     def __init__(self):
@@ -12,8 +13,16 @@ class GCSTransfer:
         self.bucket = configParser.get('GCS', 'BUCKET')
         self.dir = configParser.get('GCS', 'DIRECTORY')
 
-    def transfer(self, source_file, gcs_path):
-        gcs_path = "gs://%s/%s" % (self.bucket, self.dir)
-        command='gsutil -m -q %s cp %s %s' % (BOTO, source_file, gcs_path )
-        print(command)
-        os.system(command)
+    def transfer(self, source_file, destination_file):
+        """Transfer the attachment file to the bucket."""
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(self.bucket)
+        dest = "%s/%s" % (self.dir, destination_file)
+        blob = bucket.blob(dest)
+
+        blob.upload_from_filename(source_file)
+
+        print('File {} uploaded to {}.'.format(
+            source_file,
+            dest))
+
