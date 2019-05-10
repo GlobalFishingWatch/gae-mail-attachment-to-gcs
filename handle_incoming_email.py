@@ -12,13 +12,13 @@ class VmsGCSUploaderHandler(InboundMailHandler):
         plaintext_bodies = mail_message.bodies('text/plain')
         html_bodies = mail_message.bodies('text/html')
 
-        msg_date = html_bodies.date
-        msg_date = msg_date.strftime("%Y%m%d-%H%M")
-
         for body in html_bodies:
             decoded_html = body.decode()
             logging.info("Html body of length %d.", len(decoded_html))
             logging.info("Html body %s.", decoded_html)
+
+        msg_date = mail_message.date
+        msg_date = msg_date.strftime("%Y%m%d-%H%M")
 
         attachments = main_message.attachments
         logging.info("Html attachments of length %d.", len(attachments))
