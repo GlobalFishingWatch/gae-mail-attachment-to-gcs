@@ -58,7 +58,6 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             #Upload attachment to GCS
             transfer = GCSTransfer()
             path = transfer.transfer(att_name, att_content.payload)
-            self.tmp_filenames_to_clean_up.append(path)
 
 
 app = webapp2.WSGIApplication([VmsGCSUploaderHandler.mapping()], debug=True)
