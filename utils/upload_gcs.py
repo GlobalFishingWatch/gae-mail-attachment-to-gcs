@@ -2,6 +2,7 @@ import ConfigParser
 import os
 import base64
 import logging
+
 from google.cloud import storage
 
 class GCSTransfer:
@@ -28,7 +29,7 @@ class GCSTransfer:
 
         upload_blob(source_path, "%s/%s" % (self.dir, source_file_name))
 
-    def upload_command(self, source_file_name, source_path)
+    def upload_command(self, source_file_name, source_path):
         gcs_path = "gs://%s/%s/%s" % (self.bucket, self.dir, source_file_name)
         BOTO = "-o Boto:parallel_process_count=%s -o Boto:parallel_thread_count=%s" % (self.boto_process, self.boto_thread)
         command='gsutil -m -q %s cp %s %s' % (BOTO, source_path, gcs_path)
