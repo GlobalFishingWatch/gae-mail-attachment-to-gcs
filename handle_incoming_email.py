@@ -1,7 +1,6 @@
 import exceptions
 import logging
 from datetime import datetime
-from dateutil import parser
 
 from google.appengine.api.mail import Attachment
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
@@ -22,7 +21,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
         msg_date = datetime.now()
         try:
             mail_date = mail_message.date
-            msg_date = parser.parse(mail_date)
+            msg_date = datetime.strptime(mail_date, '%a, %d %b %Y %H:%M:%S %z')
             logging.info("The email was send on: " + mail_date)
         except exceptions.AttributeError :
             logging.info("The email has no send date specified!!!")
