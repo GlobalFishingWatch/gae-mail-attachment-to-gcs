@@ -22,28 +22,31 @@ class VmsGCSUploaderHandler(InboundMailHandler):
         msg_date = datetime.now()
         try:
             mail_date = mail_message.date
-            #get the date with tz
-            mail_date_tz = email.utils.parsedate_tz(mail_date)
-            #timestamp of tz and convert to date to UTC
-            msg_date = datetime.utcfromtimestamp(email.utils.mktime_tz(mail_date_tz))
             logging.info("The email was send on: " + mail_date)
+            #Gets the date with timezone
+            mail_date_tz = email.utils.parsedate_tz(mail_date)
+            #Gets the timestamp of tz and convert to date flating to UTC
+            msg_date = datetime.utcfromtimestamp(email.utils.mktime_tz(mail_date_tz))
         except exceptions.AttributeError :
             logging.info("The email has no send date specified!!!")
 
-        plaintext_bodies = mail_message.bodies('text/plain')
-        html_bodies = mail_message.bodies('text/html')
-
-        for body in html_bodies:
-            logging.info("Html body %s.", body)
-            num, decoded_html = body
-            logging.info("Html body %s.", decoded_html)
+        #Uncomment if there is information in the body
+        # plaintext_bodies = mail_message.bodies('text/plain')
+        # html_bodies = mail_message.bodies('text/html')
+        # for body in html_bodies:
+        #     logging.info("Html body %s.", body)
+        #     num, decoded_html = body
+        #     logging.info("Html body %s.", decoded_html)
 
 
         attachments = mail_message.attachments
-        logging.info("Html attachments of length %d.", len(attachments))
+        if len(attachments)>0:
+            logging.info("Email has attachments")
         for attachment in attachments:
             logging.info("Attachment filename %s.", attachment.filename)
             logging.info("Attachment payload %s.", attachment.payload)
+            logging.info("Attachment payload.payload %s.", attachment.payload.payload)
+
 
             hash_object = hashlib.md5(attachment.payload.payload)
             attHash = hash_object.hexdigest()
@@ -51,9 +54,9 @@ class VmsGCSUploaderHandler(InboundMailHandler):
 
             #Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
             att_name = msg_date_str + "-" + attHash + ".data"
-            logging.info("Attachment name %s.", att_name)
+            logging.info("Writting the file %s.", att_name)
             #Upload attachment to GCS
-            # GCSTransfer()
+            GCSTransfer()
 
 
 app = webapp2.WSGIApplication([VmsGCSUploaderHandler.mapping()], debug=True)
