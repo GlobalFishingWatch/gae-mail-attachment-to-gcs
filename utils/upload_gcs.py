@@ -3,7 +3,7 @@ import os
 import base64
 import logging
 
-from google.cloud import storage
+import cloudstorage
 
 class GCSTransfer:
     def __init__(self):
@@ -19,15 +19,22 @@ class GCSTransfer:
     def transfer(self, source_file_name, source_content):
         """Transfer the attachment file to the bucket."""
 
-        source_path = "/tmp/%s" % (source_file_name)
+        # source_path = "/tmp/%s" % (source_file_name)
+        # logging.info("Open to write the file %s" % (source_path))
+        # f = open(source_path, 'wb')
+        # f.write(base64.b64decode(source_content))
+        # logging.info("File written")
+        # f.close()
 
-        logging.info("Open to write the file %s" % (source_path))
-        f = open(source_path, 'wb')
-        f.write(base64.b64decode(source_content))
-        logging.info("File written")
-        f.close()
-
-        upload_blob(source_path, "%s/%s" % (self.dir, source_file_name))
+        logging.info("Writting STARTS with cloudstorage")
+        gcs_path = "gs://%s/%s/%s" % (self.bucket, self.dir, source_file_name)
+        # The retry_params specified in the open call will override the default
+        # retry params for this particular file handle.
+        write_retry_params = cloudstorage.RetryParams(backoff_factor=1.1)
+        with cloudstorage.open(gcs_path, 'w', retry_params=write_retry_params) as cloudstorage_file:
+            cloudstorage_file.write(base64.b64decode(source_content))
+        logging.info("Writting ENDS with cloudstorage")
+        return gcs_path
 
     def upload_command(self, source_file_name, source_path):
         gcs_path = "gs://%s/%s/%s" % (self.bucket, self.dir, source_file_name)
