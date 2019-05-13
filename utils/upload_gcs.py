@@ -1,5 +1,6 @@
 import ConfigParser
 import os
+import base64
 
 class GCSTransfer:
     def __init__(self):
@@ -12,11 +13,12 @@ class GCSTransfer:
         self.dir = configParser.get('GCS', 'DIRECTORY')
         configParser
 
-    def transfer(self, source_file_name, source_file_content, destination_file):
+    def transfer(self, source_file_name, source_content):
         """Transfer the attachment file to the bucket."""
+
         source_path = "/tmp/%s".format(source_file_name)
         f = open(source_path, 'wb')
-        f.write(source_file_content)
+        f.write(base64.b64decode(source_content))
         f.close()
 
         gcs_path = "gs://%s/%s/%s" % (self.bucket, self.dir, source_file_name)

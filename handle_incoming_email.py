@@ -1,12 +1,13 @@
 import exceptions
-import logging
 from datetime import datetime
+from utils.upload_gcs import GCSTransfer
+import logging
 import email.utils
+import hashlib
 
 from google.appengine.api.mail import Attachment
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 import webapp2
-import hashlib
 
 class VmsGCSUploaderHandler(InboundMailHandler):
     def receive(self, mail_message):
@@ -44,11 +45,10 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             logging.info("Email has attachments")
         for attachment in attachments:
             logging.info("Attachment filename %s.", attachment.filename)
-            logging.info("Attachment payload %s.", attachment.payload)
-            logging.info("Attachment payload.payload %s.", attachment.payload.payload)
+            att_content = attachment.payload
+            logging.info("Attachment payload %s.", att_content)
 
-
-            hash_object = hashlib.md5(attachment.payload.payload)
+            hash_object = hashlib.md5(att_content.payload)
             attHash = hash_object.hexdigest()
             msg_date_str = msg_date.strftime("%Y%m%d-%H%M")
 
@@ -56,7 +56,8 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             att_name = msg_date_str + "-" + attHash + ".data"
             logging.info("Writting the file %s.", att_name)
             #Upload attachment to GCS
-            GCSTransfer()
+            transfer = GCSTransfer()
+            transfer.transfer(att_name, att_content)
 
 
 app = webapp2.WSGIApplication([VmsGCSUploaderHandler.mapping()], debug=True)
