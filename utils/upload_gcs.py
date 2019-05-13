@@ -24,7 +24,12 @@ class GCSTransfer:
         logging.info("File written")
         f.close()
 
-        upload_command(source_file_name, source_path)
+        gcs_path = "gs://%s/%s/%s" % (self.bucket, self.dir, source_file_name)
+        BOTO = "-o Boto:parallel_process_count=%s -o Boto:parallel_thread_count=%s" % (self.boto_process, self.boto_thread)
+        command='gsutil -m -q %s cp %s %s' % (BOTO, source_path, gcs_path)
+        print(command)
+        os.system(command)
+        logging.info("File %s upload to %s" % (source_file_name, gcs_path))
 
     # def cloud_copy(self, source_file_name, source_content):
     #     logging.info("Writting STARTS with cloudstorage")
