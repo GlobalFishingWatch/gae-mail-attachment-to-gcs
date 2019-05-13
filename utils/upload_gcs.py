@@ -1,6 +1,7 @@
 import ConfigParser
 import os
 import base64
+import logging
 
 class GCSTransfer:
     def __init__(self):
@@ -16,13 +17,17 @@ class GCSTransfer:
     def transfer(self, source_file_name, source_content):
         """Transfer the attachment file to the bucket."""
 
-        source_path = "/tmp/%s".format(source_file_name)
+        source_path = "/tmp/%s" % (source_file_name)
+
+        logging.info("Open to write the file %s".format(source_path))
         f = open(source_path, 'wb')
         f.write(base64.b64decode(source_content))
+        logging.info("File written")
         f.close()
 
         gcs_path = "gs://%s/%s/%s" % (self.bucket, self.dir, source_file_name)
         BOTO = "-o Boto:parallel_process_count=%s -o Boto:parallel_thread_count=%s" % (self.boto_process, self.boto_thread)
-        command='gsutil -m -q  %s cp %s %s' % (BOTO, source_path, gcs_path)
+        command='gsutil -m -q %s cp %s %s' % (BOTO, source_path, gcs_path)
         print(command)
         os.system(command)
+        logging.info("File %s upload to %s" % (source_file_name, gcs_path))
