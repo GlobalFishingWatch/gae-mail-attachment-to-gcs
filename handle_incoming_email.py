@@ -50,7 +50,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             msg_date_str = msg_date.strftime("%Y%m%d-%H%M")
 
             #Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
-            att_nam = msg_date_str + "-" + attHash + ".data"
+            att_name = msg_date_str + "-" + attHash + ".data"
             logging.info("Attachment name %s.", att_name)
             #Upload attachment to GCS
             # GCSTransfer()
