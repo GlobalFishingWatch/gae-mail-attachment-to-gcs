@@ -4,9 +4,11 @@ import base64
 import logging
 
 from google.cloud import storage
+from requests_toolbelt.adapters import appengine
 
 class GCSTransfer:
     def __init__(self):
+        appengine.monkeypatch()
         configParser = ConfigParser.RawConfigParser()
         file = r'./config/reception.cfg'
         configParser.read(file)
