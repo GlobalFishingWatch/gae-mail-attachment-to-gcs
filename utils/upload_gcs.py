@@ -14,8 +14,6 @@ class GCSTransfer:
         configParser = ConfigParser.RawConfigParser()
         file = r'./config/reception.cfg'
         configParser.read(file)
-        self.boto_process = configParser.get('GCS', 'BOTO_PARALLEL_PROCESS')
-        self.boto_thread = configParser.get('GCS', 'BOTO_PARALLEL_THREAD')
         self.bucket = configParser.get('GCS', 'BUCKET')
         self.dir = configParser.get('GCS', 'DIRECTORY')
         configParser
