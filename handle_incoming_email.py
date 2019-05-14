@@ -31,15 +31,6 @@ class VmsGCSUploaderHandler(InboundMailHandler):
         except exceptions.AttributeError :
             logging.info("The email has no send date specified!!!")
 
-        #Uncomment if there is information in the body
-        # plaintext_bodies = mail_message.bodies('text/plain')
-        # html_bodies = mail_message.bodies('text/html')
-        # for body in html_bodies:
-        #     logging.info("Html body %s.", body)
-        #     num, decoded_html = body
-        #     logging.info("Html body %s.", decoded_html)
-
-
         attachments = mail_message.attachments
         if len(attachments)>0:
             logging.info("Email has attachments")
