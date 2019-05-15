@@ -13,7 +13,8 @@ class VmsGCSUploaderHandler(InboundMailHandler):
     def receive(self, mail_message):
         logging.info("Received a message from: " + mail_message.sender)
         logging.info("The email subject: " + mail_message.subject)
-        logging.info("The email was addressed to: " + str.join(str(mail_message.to), ', '))
+        to_addresses = str.join(str(mail_message.to), ', ')
+        logging.info("The email was addressed to: " + to_addresses)
 
         try:
             logging.info("The email was CC-ed to: " + str.join(str(mail_message.cc), ', '))
@@ -47,7 +48,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             att_name = msg_date_str + "-" + attHash + ".data"
             logging.info("Writting the file %s.", att_name)
             #Upload attachment to GCS
-            transfer = GCSTransfer()
+            transfer = GCSTransfer(to_addresses)
             path = transfer.transfer(att_name, att_content.payload)
 
 

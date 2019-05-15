@@ -2,21 +2,27 @@ import ConfigParser
 import os
 import base64
 import logging
+import re
 
 from google.cloud import storage
 from requests_toolbelt.adapters import appengine
 
 class GCSTransfer:
-    def __init__(self):
+    def __init__(self, to_account):
         #This line fixes the error
         #AttributeError: 'VerifiedHTTPSConnection' object has no attribute '_tunnel_host'
         appengine.monkeypatch()
         configParser = ConfigParser.RawConfigParser()
         file = r'./config/reception.cfg'
         configParser.read(file)
-        self.bucket = configParser.get('GCS', 'BUCKET')
-        self.dir = configParser.get('GCS', 'DIRECTORY')
-        configParser
+        self.bucket = configParser.get('DEFAULT', 'BUCKET')
+        self.dir = configParser.get('DEFAULT', 'DIRECTORY')
+
+        for account in configParser.sections():
+            matchObj = re.match('.*%s.*' % (account), to_account, re.I)
+            if matchObj:
+                self.bucket = configParser.get(account, 'BUCKET')
+                self.dir = configParser.get(account, 'DIRECTORY')
 
     def transfer(self, source_file_name, source_content):
         """Transfer the attachment file to the bucket."""
