@@ -1,6 +1,5 @@
 import ConfigParser
 import os
-import base64
 import logging
 import re
 
@@ -30,7 +29,7 @@ class GCSTransfer:
         source_path = "/tmp/%s" % (source_file_name)
         logging.info("Open to write the file %s" % (source_path))
         f = open(source_path, 'wb')
-        f.write(base64.b64decode(source_content))
+        f.write(source_content)
         logging.info("File written")
         f.close()
 
