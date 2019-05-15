@@ -1,0 +1,3 @@
+[DEFAULT]
+BUCKET=scratch-matias
+DIRECTORY=attachments
