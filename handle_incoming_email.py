@@ -48,7 +48,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             att_name = msg_date_str + "-" + attHash + ".data"
             logging.info("Writting the file %s.", att_name)
             #Upload attachment to GCS
-            transfer = GCSTransfer(to_addresses)
+            transfer = GCSTransfer(to_addresses, msg_date.strftime("%Y-%m-%d"))
             path = transfer.transfer(att_name, att_content.payload.decode())
 
 

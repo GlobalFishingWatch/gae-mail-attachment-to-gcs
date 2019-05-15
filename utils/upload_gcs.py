@@ -7,13 +7,14 @@ from google.cloud import storage
 from requests_toolbelt.adapters import appengine
 
 class GCSTransfer:
-    def __init__(self, to_account):
+    def __init__(self, to_account, msg_date):
         #This line fixes the error
         #AttributeError: 'VerifiedHTTPSConnection' object has no attribute '_tunnel_host'
         appengine.monkeypatch()
         configParser = ConfigParser.RawConfigParser()
         file = r'./config/reception.cfg'
         configParser.read(file)
+        self.msg_date=msg_date
         self.bucket = configParser.get('DEFAULT', 'BUCKET')
         self.dir = configParser.get('DEFAULT', 'DIRECTORY')
 
@@ -33,7 +34,7 @@ class GCSTransfer:
         logging.info("File written")
         f.close()
 
-        destination_path = "%s/%s" % (self.dir, source_file_name)
+        destination_path = "%s/%s/%s" % (self.dir, self.msg_date, source_file_name)
         self.upload_blob(source_path, destination_path)
 
     def upload_blob(self, source_path, destination_blob_name):
