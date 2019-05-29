@@ -51,7 +51,7 @@ def process_mailbox(M, start_date, end_date):
         print "No messages found!"
         return
 
-    print '>> ', data
+    print '>> Total emails to process ', len(data)
 
     for num in data[0].split():
         status, data = M.fetch(num, '(RFC822)')
@@ -84,14 +84,15 @@ def process_mailbox(M, start_date, end_date):
 
             #Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
             att_name = msg_date_str + "-" + attHash + ".data"
-            print '>> ', att_content.decode()
+            content = att_content
+            print '>> ', content
             print '>> ', att_name
 
             #Upload attachment to GCS
             transfer = GCSTransfer(to, msg_date.strftime("%Y-%m-%d"))
-            path = transfer.transfer(att_name, att_content.decode())
+            path = transfer.transfer(att_name, content)
 
-        # if num == '20':
+        # if num == '74':
         #     break
 
 
