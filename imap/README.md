@@ -17,5 +17,5 @@ The arguments are:
 
 Example:
 ```bash
-$ python ./imap/read.py --account matias@globalfishingwatch.org -f PANAMA -s 2019-04-16 -e 2019-04-17
+$ python -m imap/read --account matias@globalfishingwatch.org -f PANAMA -s 2019-04-16 -e 2019-04-17
 ```

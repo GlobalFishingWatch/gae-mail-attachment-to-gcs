@@ -90,10 +90,7 @@ def process_mailbox(M, start_date, end_date):
 
             #Upload attachment to GCS
             transfer = GCSTransfer(to, msg_date.strftime("%Y-%m-%d"))
-            path = transfer.transfer(att_name, content)
-
-        # if num == '74':
-        #     break
+            path = transfer.local_transfer(att_name, content)
 
 
 def main(account, folder, start_date, end_date):
