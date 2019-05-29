@@ -6,6 +6,7 @@
  - Configure the [`App passwords`](https://support.google.com/accounts/answer/185833)
     `App passwords` let you sign in to your Google Account from apps on devices that don't support 2-Step Verification. You'll only need to enter it once so you don't need to remember it.
  - Run this command in a local server and `NOT` in `GAE standard environment`
+ - Configure the `reception.cfg` file under `config/` folder that matches with the `To` email account and configures the `Bucket` and `Folder` to store the emails.
 
 ## How to run
 
