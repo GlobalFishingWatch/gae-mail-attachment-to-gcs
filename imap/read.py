@@ -51,7 +51,7 @@ def process_mailbox(M, start_date, end_date):
         print "No messages found!"
         return
 
-    print '>> Total emails to process ', len(data)
+    print '>> Total emails to process ', len(data[0]) if len(data)>0 else 'Zero.'
 
     for num in data[0].split():
         status, data = M.fetch(num, '(RFC822)')
