@@ -10,6 +10,7 @@ import logging
 import sys
 import os  
 import time
+import socket
 
 FORMAT = '%(asctime)-15s - %(message)s'
 OUTPUT_PATH = 'output'
@@ -21,13 +22,15 @@ class IMAP4Connection():
         self.folder = folder
         self.start_date = start_date
         self.end_date = end_date
+        self.count=0
+        self.slice_size=100
         self.passwd = None
         self.zero_mails = False
 
-    def chunks(self, list, number_of_elements):
+    def chunks(self, list):
         """Yield successive n-sized chunks from l."""
-        for i in xrange(0, len(list), number_of_elements):
-            yield list[i:i + number_of_elements]
+        for i in xrange(0, len(list), self.slice_size):
+            yield list[i:i + self.slice_size]
 
     def _gmailTime2Internaldate(self, date_time):
         _month_names = [None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -70,18 +73,16 @@ class IMAP4Connection():
             self.zero_mails=True
 
         email_ids_list = email_ids[0].split()
-        slice_size=100
-        email_id_lists_chunked = list(self.chunks(email_ids_list, slice_size))
+        email_id_lists_chunked = list(self.chunks(email_ids_list))
 
-        count=0
         for i in xrange(len(email_id_lists_chunked)):
-            old_counter=count
-            count=count+len(email_id_lists_chunked[i])
+            old_counter=self.count
+            self.count=self.count+len(email_id_lists_chunked[i])
             print "Fetching from {} to {} out of {} (slize = {}), be patient may take some time.".format(
                                                                 old_counter,
-                                                                count,
+                                                                self.count,
                                                                 total_emails,
-                                                                slice_size)
+                                                                self.slice_size)
             email_ids_sub_list=email_id_lists_chunked[i]
             fetch_ids = ','.join(email_ids_sub_list)
 
@@ -123,15 +124,14 @@ class IMAP4Connection():
                     #transfer = GCSTransfer(to, msg_date.strftime("%Y-%m-%d"))
                     #path = transfer.local_transfer(att_name, content)
 
-                    #last date processed in case it re-connects
-                    self.start_date = msg_date.strftime('%Y-%m-%d')
-
     def connect(self):
         #Implement a basic retry mechanism
         while not self.zero_mails:
             try:
                 self.establish_connection()
             except Exception as err:
+                if self.count>0:
+                    self.count-=self.slice_size
                 print(err)
                 seconds=10
                 print "Retrying in {} seconds".format(seconds)
@@ -182,6 +182,8 @@ def validate_date(date_text):
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
 
 def main(account, folder, start_date, end_date):
+    #uncomment this if you want to try the reconnection
+    socket.setdefaulttimeout(10)
     if not os.path.exists(OUTPUT_PATH):
         os.makedirs(OUTPUT_PATH)
 
