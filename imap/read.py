@@ -8,10 +8,17 @@ import hashlib
 import imaplib
 import logging
 import sys
+import os  
 import time
 
 FORMAT = '%(asctime)-15s - %(message)s'
+OUTPUT_PATH = 'output'
 logging.basicConfig(format=FORMAT)
+
+def chunks(list, number_of_elements):
+    """Yield successive n-sized chunks from l."""
+    for i in xrange(0, len(list), number_of_elements):
+        yield list[i:i + number_of_elements]
 
 def _gmailTime2Internaldate(date_time):
     _month_names = [None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -33,7 +40,7 @@ def validate_date(date_text):
     except ValueError:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
 
-def process_mailbox(M, start_date, end_date):
+def process_mailbox(imap_connection, start_date, end_date):
     where=[]
     where.append('ALL')
     if start_date != None:
@@ -45,61 +52,91 @@ def process_mailbox(M, start_date, end_date):
         where.append('BEFORE')
         where.append(ends)
     print '>> ', where
-    # status, data = M.search(None, "ALL")
-    status, data = M.search(None, *where)
+
+    status, email_ids = imap_connection.search(None, *where)
     if status != 'OK':
         print "No messages found!"
         return
 
-    print '>> Total emails to process ', len(data[0]) if len(data)>0 else 'Zero.'
+    total_emails=len(email_ids[0].split())
+    print '>> Total emails to process ', total_emails if len(email_ids)>0 else 'Zero.'
+    email_ids_list = email_ids[0].split()
+    slice_size=100
+    email_id_lists_chunked = list(chunks(email_ids_list, slice_size))
 
-    for num in data[0].split():
-        status, data = M.fetch(num, '(RFC822)')
-        if status != 'OK':
-            print "ERROR getting message", num
-            return
+    count=0
+    for i in xrange(len(email_id_lists_chunked)):
+        old_counter=count
+        count=count+len(email_id_lists_chunked[i])
+        print "Fetching from {} to {} out of {} (slize = {}), be patient may take some time.".format(
+                                                            old_counter,
+                                                            count,
+                                                            total_emails,
+                                                            slice_size)
+        email_ids_sub_list=email_id_lists_chunked[i]
+        fetch_ids = ','.join(email_ids_sub_list)
+        
+        #Implement a basic retry mechanism
+        while True:
+            try:
+                status, emails = imap_connection.fetch(fetch_ids, '(RFC822)')
+                if status == 'OK':
+                    break
+            except Exception as err:
+                print(err)
+                seconds=10
+                print "Retrying in {} seconds".format(seconds)
+                time.sleep(seconds)
+        
+        print "Got {} emails.".format(len(emails)/2)
+        
+        for m in range(len(email_ids_sub_list)):
+            msg = email.message_from_string(emails[m*2+0][1])
+            decode = email.header.decode_header(msg['Subject'])[0]
+            to = msg['To']
+            date = msg['Date']
 
-        msg = email.message_from_string(data[0][1])
-        decode = email.header.decode_header(msg['Subject'])[0]
-        to = msg['To']
-        date = msg['Date']
-
-        # subject = unicode(decode[0])
-        subject = decode[0]
-        print '>> Message %s: %s, to: %s' % (num, subject, to)
-        # Now convert to local date-time
-        date_tuple = email.utils.parsedate_tz(date)
-        msg_date = datetime.now()
-        if date_tuple:
-            msg_date = datetime.utcfromtimestamp(email.utils.mktime_tz(date_tuple))
-
-        for attachment in msg.get_payload():
-            if attachment.get_content_type() == 'text/plain':
-                break
-            att_content = attachment.get_payload(decode=True)
-
-            hash_object = hashlib.md5(att_content)
-            attHash = hash_object.hexdigest()
-            msg_date_str = msg_date.strftime("%Y%m%d-%H%M")
-
-            #Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
-            att_name = msg_date_str + "-" + attHash + ".data"
-            content = att_content
-            print '>> ', content
-            print '>> ', att_name
-
-            #Upload attachment to GCS
-            transfer = GCSTransfer(to, msg_date.strftime("%Y-%m-%d"))
-            path = transfer.local_transfer(att_name, content)
+            subject = decode[0]
+            #print '>> Message %s: %s, to: %s' % (i, subject, to)
+            # Now convert to local date-time
+            date_tuple = email.utils.parsedate_tz(date)
+            msg_date = datetime.now()
+            if date_tuple:
+                msg_date = datetime.utcfromtimestamp(email.utils.mktime_tz(date_tuple))
+    
+            for attachment in msg.get_payload():
+                if attachment.get_content_type() == 'text/plain':
+                    break
+                attachment_content = attachment.get_payload(decode=True)
+    
+                hash_object = hashlib.md5(attachment_content)
+                attHash = hash_object.hexdigest()
+                msg_date_str = msg_date.strftime("%Y%m%d-%H%M")
+    
+                #Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
+                file_name = msg_date_str + "-" + attHash + ".data"
+                #print '>> ', attachment_content
+                #print '>> ', file_name
+                
+                path = "{}/{}".format(OUTPUT_PATH,file_name)
+                f = open(path, 'wb')
+                f.write(attachment_content)
+                f.close()
+    
+                #Upload attachment to GCS
+                #transfer = GCSTransfer(to, msg_date.strftime("%Y-%m-%d"))
+                #path = transfer.local_transfer(att_name, content)
 
 
 def main(account, folder, start_date, end_date):
+    if not os.path.exists(OUTPUT_PATH):
+        os.makedirs(OUTPUT_PATH)
     print 'Connects to GMAIL imap'
-    M = imaplib.IMAP4_SSL('imap.gmail.com')
+    imap_connection = imaplib.IMAP4_SSL('imap.gmail.com')
 
     try:
         print "Login the account <%s>" % (account)
-        status, data = M.login(account, getpass.getpass())
+        status, data = imap_connection.login(account, getpass.getpass())
     except imaplib.IMAP4.error as err:
         print(err)
         logging.error("LOGIN FAILED!!! ")
@@ -107,22 +144,22 @@ def main(account, folder, start_date, end_date):
 
     print ">> (%s, %s)" % (status, data)
 
-    status, mailboxes = M.list()
+    status, mailboxes = imap_connection.list()
     if status == 'OK':
         print "Mailboxes:"
         for mailbox in mailboxes:
             print '>> ', mailbox
 
     print 'Checking folder ', folder
-    status, data = M.select('"%s"' % (folder))
+    status, data = imap_connection.select('"%s"' % (folder))
     if status == 'OK':
         print "Processing mailbox...\n"
-        process_mailbox(M, start_date, end_date)
-        M.close()
+        process_mailbox(imap_connection, start_date, end_date)
+        imap_connection.close()
     else:
         print "ERROR: Unable to open mailbox ", folder, ' - ', status
 
-    M.logout()
+    imap_connection.logout()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -143,5 +180,8 @@ if __name__ == '__main__':
         validate_date(args.start_date)
     if args.end_date != None:
         validate_date(args.end_date)
+    startTime = datetime.now()
+    print datetime.now() - startTime    
     main(args.account, args.folder, args.start_date, args.end_date)
+    print(datetime.now() - startTime)
 
