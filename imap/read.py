@@ -183,7 +183,7 @@ def validate_date(date_text):
 
 def main(account, folder, start_date, end_date):
     #uncomment this if you want to try the reconnection
-    socket.setdefaulttimeout(10)
+    # socket.setdefaulttimeout(10)
     if not os.path.exists(OUTPUT_PATH):
         os.makedirs(OUTPUT_PATH)
 
