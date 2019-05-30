@@ -40,7 +40,7 @@ def validate_date(date_text):
     except ValueError:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
 
-def process_mailbox(imap_connection, start_date, end_date):
+def process_mailbox(account, password, imap_connection, start_date, end_date):
     where=[]
     where.append('ALL')
     if start_date != None:
@@ -83,6 +83,9 @@ def process_mailbox(imap_connection, start_date, end_date):
                 if status == 'OK':
                     break
             except Exception as err:
+                imap_connection.close()
+                imap_connection = imaplib.IMAP4_SSL('imap.gmail.com')
+                imap_connection.login(account, password)
                 print(err)
                 seconds=10
                 print "Retrying in {} seconds".format(seconds)
@@ -132,11 +135,12 @@ def main(account, folder, start_date, end_date):
     if not os.path.exists(OUTPUT_PATH):
         os.makedirs(OUTPUT_PATH)
     print 'Connects to GMAIL imap'
+    password = getpass.getpass()
     imap_connection = imaplib.IMAP4_SSL('imap.gmail.com')
 
     try:
         print "Login the account <%s>" % (account)
-        status, data = imap_connection.login(account, getpass.getpass())
+        status, data = imap_connection.login(account, password)
     except imaplib.IMAP4.error as err:
         print(err)
         logging.error("LOGIN FAILED!!! ")
@@ -145,16 +149,16 @@ def main(account, folder, start_date, end_date):
     print ">> (%s, %s)" % (status, data)
 
     status, mailboxes = imap_connection.list()
-    if status == 'OK':
-        print "Mailboxes:"
-        for mailbox in mailboxes:
-            print '>> ', mailbox
+    #if status == 'OK':
+    #    print "Mailboxes:"
+    #    for mailbox in mailboxes:
+    #        print '>> ', mailbox
 
     print 'Checking folder ', folder
     status, data = imap_connection.select('"%s"' % (folder))
     if status == 'OK':
         print "Processing mailbox...\n"
-        process_mailbox(imap_connection, start_date, end_date)
+        process_mailbox(account, password, imap_connection, start_date, end_date)
         imap_connection.close()
     else:
         print "ERROR: Unable to open mailbox ", folder, ' - ', status
