@@ -52,34 +52,50 @@ def process_mailbox(imap_connection, start_date, end_date):
         where.append('BEFORE')
         where.append(ends)
     print '>> ', where
-    # status, data = imap_connection.search(None, "ALL")
+
     status, email_ids = imap_connection.search(None, *where)
     if status != 'OK':
         print "No messages found!"
         return
 
-    print '>> Total emails to process ', len(email_ids[0].split()) if len(email_ids)>0 else 'Zero.'
+    total_emails=len(email_ids[0].split())
+    print '>> Total emails to process ', total_emails if len(email_ids)>0 else 'Zero.'
     email_ids_list = email_ids[0].split()
-    slice_size=500
+    slice_size=100
     email_id_lists_chunked = list(chunks(email_ids_list, slice_size))
 
+    count=0
     for i in xrange(len(email_id_lists_chunked)):
-        print "Fetching batch of {}, this may take some time, please wait.".format(slice_size)
+        old_counter=count
+        count=count+len(email_id_lists_chunked[i])
+        print "Fetching from {} to {} out of {} (slize = {}), be patient may take some time.".format(
+                                                            old_counter,
+                                                            count,
+                                                            total_emails,
+                                                            slice_size)
         email_ids_sub_list=email_id_lists_chunked[i]
         fetch_ids = ','.join(email_ids_sub_list)
-        status, emails = imap_connection.fetch(fetch_ids, '(RFC822)')
+        
+        #Implement a basic retry mechanism
+        while True:
+            try:
+                status, emails = imap_connection.fetch(fetch_ids, '(RFC822)')
+                if status == 'OK':
+                    break
+            except Exception as err:
+                print(err)
+                seconds=10
+                print "Retrying in {} seconds".format(seconds)
+                time.sleep(seconds)
+        
         print "Got {} emails.".format(len(emails)/2)
-        if status != 'OK':
-            print "ERROR getting message", fetch_ids
-            return
         
         for m in range(len(email_ids_sub_list)):
             msg = email.message_from_string(emails[m*2+0][1])
             decode = email.header.decode_header(msg['Subject'])[0]
             to = msg['To']
             date = msg['Date']
-    
-            # subject = unicode(decode[0])
+
             subject = decode[0]
             #print '>> Message %s: %s, to: %s' % (i, subject, to)
             # Now convert to local date-time
@@ -164,5 +180,8 @@ if __name__ == '__main__':
         validate_date(args.start_date)
     if args.end_date != None:
         validate_date(args.end_date)
+    startTime = datetime.now()
+    print datetime.now() - startTime    
     main(args.account, args.folder, args.start_date, args.end_date)
+    print(datetime.now() - startTime)
 
