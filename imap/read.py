@@ -83,9 +83,9 @@ def process_mailbox(account, password, imap_connection, start_date, end_date):
                 if status == 'OK':
                     break
             except Exception as err:
-                imap_connection.close()
                 imap_connection = imaplib.IMAP4_SSL('imap.gmail.com')
                 imap_connection.login(account, password)
+                imap_connection.select('"%s"' % (self.folder))
                 print(err)
                 seconds=10
                 print "Retrying in {} seconds".format(seconds)
