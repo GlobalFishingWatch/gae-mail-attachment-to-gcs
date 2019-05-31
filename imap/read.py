@@ -40,7 +40,7 @@ def validate_date(date_text):
     except ValueError:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
 
-def process_mailbox(account, password, folder, imap_connection, start_date, end_date):
+def process_mailbox(account, password, folder, imap_connection, start_date, end_date, slice_size):
     where=[]
     where.append('ALL')
     if start_date != None:
@@ -61,7 +61,6 @@ def process_mailbox(account, password, folder, imap_connection, start_date, end_
     total_emails=len(email_ids[0].split())
     print '>> Total emails to process ', total_emails if len(email_ids)>0 else 'Zero.'
     email_ids_list = email_ids[0].split()
-    slice_size=100
     email_id_lists_chunked = list(chunks(email_ids_list, slice_size))
 
     count=0
@@ -131,7 +130,7 @@ def process_mailbox(account, password, folder, imap_connection, start_date, end_
                 #path = transfer.local_transfer(att_name, content)
 
 
-def main(account, folder, start_date, end_date):
+def main(account, folder, start_date, end_date, slice_size):
     if not os.path.exists(OUTPUT_PATH):
         os.makedirs(OUTPUT_PATH)
     print 'Connects to GMAIL imap'
@@ -158,7 +157,7 @@ def main(account, folder, start_date, end_date):
     status, data = imap_connection.select('"%s"' % (folder))
     if status == 'OK':
         print "Processing mailbox...\n"
-        process_mailbox(account, password, folder, imap_connection, start_date, end_date)
+        process_mailbox(account, password, folder, imap_connection, start_date, end_date, slice_size)
         imap_connection.close()
     else:
         print "ERROR: Unable to open mailbox ", folder, ' - ', status
@@ -179,6 +178,10 @@ if __name__ == '__main__':
     parser.add_argument("-e","--end_date",
                         help="The date before you want to get the emails.",
                         required=False)
+    parser.add_argument("-ss","--slice_size",
+                        help="The size of the slize of mails to fetch at once.",
+                        required=False,
+                        default=500)
     args = parser.parse_args()
     if args.start_date != None:
         validate_date(args.start_date)
@@ -186,6 +189,6 @@ if __name__ == '__main__':
         validate_date(args.end_date)
     startTime = datetime.now()
     print datetime.now() - startTime    
-    main(args.account, args.folder, args.start_date, args.end_date)
+    main(args.account, args.folder, args.start_date, args.end_date, args.slice_size)
     print(datetime.now() - startTime)
 
