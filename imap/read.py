@@ -40,7 +40,7 @@ def validate_date(date_text):
     except ValueError:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
 
-def process_mailbox(account, password, imap_connection, start_date, end_date):
+def process_mailbox(account, password, folder, imap_connection, start_date, end_date):
     where=[]
     where.append('ALL')
     if start_date != None:
@@ -82,10 +82,10 @@ def process_mailbox(account, password, imap_connection, start_date, end_date):
                 status, emails = imap_connection.fetch(fetch_ids, '(RFC822)')
                 if status == 'OK':
                     break
-            except Exception as err:
+            except Exception as err:    
                 imap_connection = imaplib.IMAP4_SSL('imap.gmail.com')
                 imap_connection.login(account, password)
-                imap_connection.select('"%s"' % (self.folder))
+                imap_connection.select('"%s"' % (folder))
                 print(err)
                 seconds=10
                 print "Retrying in {} seconds".format(seconds)
@@ -158,7 +158,7 @@ def main(account, folder, start_date, end_date):
     status, data = imap_connection.select('"%s"' % (folder))
     if status == 'OK':
         print "Processing mailbox...\n"
-        process_mailbox(account, password, imap_connection, start_date, end_date)
+        process_mailbox(account, password, folder, imap_connection, start_date, end_date)
         imap_connection.close()
     else:
         print "ERROR: Unable to open mailbox ", folder, ' - ', status
