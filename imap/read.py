@@ -178,7 +178,7 @@ if __name__ == '__main__':
     parser.add_argument("-e","--end_date",
                         help="The date before you want to get the emails.",
                         required=False)
-    parser.add_argument("-ss","--slice_size",
+    parser.add_argument("-ss","--slice_size", type=int,
                         help="The size of the slize of mails to fetch at once.",
                         required=False,
                         default=500)
