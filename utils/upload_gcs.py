@@ -45,9 +45,7 @@ class GCSTransfer:
 
         blob.upload_from_filename(source_path)
 
-        print('File {} uploaded to {}.'.format(
-            source_path,
-            destination_blob_name))
+        logging.info("File %s uploaded to %s", source_path, destination_blob_name)
 
     def local_transfer(self, source_file_name, source_content):
         """Transfer the attachment file to the bucket."""
