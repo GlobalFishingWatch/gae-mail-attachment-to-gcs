@@ -9,31 +9,42 @@ from google.appengine.api.mail import Attachment
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 import webapp2
 
+
 class VmsGCSUploaderHandler(InboundMailHandler):
     def receive(self, mail_message):
-        logging.info("Received a message from: " + mail_message.sender)
-        logging.info("The email subject: " + mail_message.subject)
+        logging.info("Received a message from: %s", mail_message.sender)
+        logging.info("The email subject: %s", mail_message.subject)
         to_addresses = str.join(str(mail_message.to), ', ')
-        logging.info("The email was addressed to: " + to_addresses)
+        logging.info("The email was addressed to: %s", to_addresses)
 
         try:
-            logging.info("The email was CC-ed to: " + str.join(str(mail_message.cc), ', '))
-        except exceptions.AttributeError:
-            logging.info("The email has no CC-ed recipients")
+            mail_bodies = mail_message.bodies("text/plain")
+            for content_type, body in mail_bodies:
+                logging.debug(
+                    "Processing mail body with content type %s", content_type)
+                text = body.decode()
+                logging.debug("The mail body is [%s]", text)
+        except:
+            logging.exception("Unable to read the mail body")
 
         msg_date = datetime.now()
         try:
             mail_date = mail_message.date
-            logging.info("The email was send on: " + mail_date)
-            #Gets the date with timezone
+            logging.info("The email was sent on: %s", mail_date)
+            # Gets the date with timezone
             mail_date_tz = email.utils.parsedate_tz(mail_date)
-            #Gets the timestamp of tz and convert to date flating to UTC
-            msg_date = datetime.utcfromtimestamp(email.utils.mktime_tz(mail_date_tz))
-        except exceptions.AttributeError :
-            logging.info("The email has no send date specified!!!")
+            # Gets the timestamp of tz and convert to date flating to UTC
+            msg_date = datetime.utcfromtimestamp(
+                email.utils.mktime_tz(mail_date_tz))
+        except exceptions.AttributeError:
+            logging.info("The email has no send date specified!")
+
+        if not hasattr(mail_message, 'attachments'):
+            logging.info("The email has no attachments, skipping")
+            return
 
         attachments = mail_message.attachments
-        if len(attachments)>0:
+        if len(attachments) > 0:
             logging.info("Email has attachments")
         for attachment in attachments:
             logging.info("Attachment filename %s.", attachment.filename)
@@ -44,10 +55,10 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             attHash = hash_object.hexdigest()
             msg_date_str = msg_date.strftime("%Y%m%d-%H%M")
 
-            #Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
+            # Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
             att_name = msg_date_str + "-" + attHash + ".data"
             logging.info("Writting the file %s.", att_name)
-            #Upload attachment to GCS
+            # Upload attachment to GCS
             transfer = GCSTransfer(to_addresses, msg_date.strftime("%Y-%m-%d"))
             path = transfer.transfer(att_name, att_content.payload.decode())
 
