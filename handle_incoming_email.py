@@ -52,7 +52,7 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             try:
                 path = transfer.transfer(att_name, att_content.payload.decode())
             except ValueError as ve:
-                self.response.status_error(409)
+                self.response.set_status(409)
                 self.response.write(str(ve))
 
 
