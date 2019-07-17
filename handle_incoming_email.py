@@ -49,7 +49,11 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             logging.info("Writting the file %s.", att_name)
             #Upload attachment to GCS
             transfer = GCSTransfer(to_addresses, msg_date.strftime("%Y-%m-%d"))
-            path = transfer.transfer(att_name, att_content.payload.decode())
+            try:
+                path = transfer.transfer(att_name, att_content.payload.decode())
+            except ValueError as ve:
+                self.response.status_error(409)
+                self.response.write(str(ve))
 
 
 app = webapp2.WSGIApplication([VmsGCSUploaderHandler.mapping()], debug=True)

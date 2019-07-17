@@ -24,6 +24,11 @@ class GCSTransfer:
                 self.bucket = configParser.get(account, 'BUCKET')
                 self.dir = configParser.get(account, 'DIRECTORY')
 
+    def exists(self, bucket, destination_path):
+        """ Verifies if the file already exists in GCS """
+        # https://github.com/googleapis/google-cloud-python/blob/storage-1.15.0/storage/google/cloud/storage/bucket.py#L661
+        return bucket.get_blob(destination_path) != None
+
     def transfer(self, source_file_name, source_content):
         """Transfer the attachment file to the bucket."""
 
@@ -41,13 +46,24 @@ class GCSTransfer:
         """Uploads a file to the bucket."""
         storage_client = storage.Client()
         bucket = storage_client.get_bucket(self.bucket)
-        blob = bucket.blob(destination_blob_name)
+        if self.exists(bucket, destination_blob_name):
+            # Throws conflict error
+            raise ValueError('The file {}/{} does not exists.'.format(self.bucket, destination_blob_name))
 
+        # Uploads the blob to the GCS
+        blob = bucket.blob(destination_blob_name)
         blob.upload_from_filename(source_path)
 
         print('File {} uploaded to {}.'.format(
             source_path,
             destination_blob_name))
+
+        # Checks if the file already exists
+        if not self.exists(bucket, destination_blob_name):
+            # Throws error on not saving file.
+            raise ValueError('The file {}/{} does not exists.'.format(self.bucket, destination_blob_name))
+
+
 
     def local_transfer(self, source_file_name, source_content):
         """Transfer the attachment file to the bucket."""
