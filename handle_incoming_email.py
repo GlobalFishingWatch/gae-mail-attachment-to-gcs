@@ -28,16 +28,6 @@ class VmsGCSUploaderHandler(InboundMailHandler):
             logging.exception("Unable to read the mail body")
 
         msg_date = datetime.now()
-        try:
-            mail_date = mail_message.date
-            logging.info("The email was sent on: %s", mail_date)
-            # Gets the date with timezone
-            mail_date_tz = email.utils.parsedate_tz(mail_date)
-            # Gets the timestamp of tz and convert to date flating to UTC
-            msg_date = datetime.utcfromtimestamp(
-                email.utils.mktime_tz(mail_date_tz))
-        except exceptions.AttributeError:
-            logging.info("The email has no send date specified!")
 
         if not hasattr(mail_message, 'attachments'):
             logging.info("The email has no attachments, skipping")
@@ -53,9 +43,9 @@ class VmsGCSUploaderHandler(InboundMailHandler):
 
             hash_object = hashlib.md5(att_content.payload)
             attHash = hash_object.hexdigest()
-            msg_date_str = msg_date.strftime("%Y%m%d-%H%M")
+            msg_date_str = msg_date.strftime("%Y%m%d")
 
-            # Adds a unique identifier to the message YYYYMMDD-HHMM-HashOfTheMessageOfTheFile.data
+            # Adds a unique identifier to the message YYYYMMDD-HashOfTheMessageOfTheFile.data
             att_name = msg_date_str + "-" + attHash + ".data"
             logging.info("Writting the file %s.", att_name)
             # Upload attachment to GCS
