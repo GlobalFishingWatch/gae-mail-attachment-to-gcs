@@ -1,3 +1,6 @@
+DEPRECATED: We are moving away of the GAE approach since it is getting deprecated and did not processed all emails. New repo can be found here: https://github.com/GlobalFishingWatch/smtp-server
+
+
 # gae-mail-attachment-to-gcs
 Process inbound messages from VMS
 
